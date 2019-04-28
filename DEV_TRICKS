@@ -1,0 +1,6 @@
+2 Test the plugin in JALV withotu install it
+cd to bin path
+export LV2_PATH=`pwd`
+lv2ls
+jalv.gtk "URL_LV2"
+ 
