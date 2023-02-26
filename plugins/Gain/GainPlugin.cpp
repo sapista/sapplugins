@@ -14,6 +14,12 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* How to run plugins in jalv without install it
+ * cd ~/build/SapAudio_plugins/sapplugins/bin
+ * export LV2_PATH=`pwd` 
+ * lv2ls
+ * jalv.gtk http://sapaudio.com/plugins/gainmono
+ */
 #include "DistrhoPlugin.hpp"
 
 START_NAMESPACE_DISTRHO
@@ -102,7 +108,7 @@ protected:
       Initialize the parameter @a index.
       This function will be called once, shortly after the plugin is created.
     */
-    void initParameter(uint32_t index, Parameter& parameter) override
+    void initParameter(uint32_t, Parameter& parameter) override
     {
         parameter.hints      = kParameterIsAutomable;
         parameter.ranges.def = 1.0f;
@@ -119,7 +125,7 @@ protected:
       Get the current value of a parameter.
       The host may call this function from any context, including realtime processing.
     */
-    float getParameterValue(uint32_t index) const override
+    float getParameterValue(uint32_t) const override
     {
         return gain;
 
@@ -154,7 +160,7 @@ protected:
         }
     }
 
-   
+
     // -------------------------------------------------------------------------------------------------------
 
 private:

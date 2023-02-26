@@ -1,6 +1,22 @@
-2 Test the plugin in JALV withotu install it
+# Test the plugin in JALV withotu install it
 cd to bin path
 export LV2_PATH=`pwd`
 lv2ls
 jalv.gtk "URL_LV2"
+ 
+ 
+# Update dpf git submodule
+git submodule update
+
+
+#Fresh cloning the git rep:
+Since the DPF is a submodule it will not be clonent. 
+Rigth after clonning the sapplugins project you must runt
+git submodule init 
+git submodule update
+
+#Infor link on git submodules
+https://git-scm.com/book/en/v2/Git-Tools-Submodules
+https://gist.github.com/gitaarik/8735255
+
  

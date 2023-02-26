@@ -15,28 +15,21 @@
  */
 
 #include "DistrhoPluginInfo.h"
-
 #include "DistrhoUI.hpp"
-
 #include "Window.hpp"
 
 START_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------------------------------------------
 
-class InfoExampleUI : public UI
+class GainUI : public UI
 {
-public:
-    InfoExampleUI()
+  public:
+    GainUI()
         : UI(405, 256),
           fScale(1.0f)
     {
-        std::memset(fParameters, 0, sizeof(float)*kParameterCount);
-        std::memset(fStrBuf, 0, sizeof(char)*(0xff+1));
-
         fSampleRate = getSampleRate();
-        fFont       = createFontFromFile("sans", "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf");
-
         setGeometryConstraints(405, 256, true);
     }
 
@@ -48,9 +41,9 @@ protected:
       A parameter has changed on the plugin side.
       This is called by the host to inform the UI about parameter changes.
     */
-    void parameterChanged(uint32_t index, float value) override
+    void parameterChanged(uint32_t, float value) override
     {
-        fParameters[index] = value;
+        fParamGain = value;
         repaint();
     }
 
@@ -74,6 +67,21 @@ protected:
     */
     void onNanoDisplay() override
     {
+        
+        
+        beginPath();
+        fillColor(0, 255, 255);
+        roundedRect(0, 0, 100, 100, 2);
+        fill();
+        
+        
+        beginPath();
+        fillColor(255, 0, 0);
+        textAlign(ALIGN_RIGHT|ALIGN_TOP);
+        textBox(100, 100, 100 * fScale, "testing Text!");
+        closePath();
+        
+        
         const float lineHeight = 20 * fScale;
 
         fontSize(15.0f * fScale);
@@ -81,11 +89,6 @@ protected:
 
         float x = 0.0f * fScale;
         float y = 15.0f * fScale;
-
-        // buffer size
-        drawLeft(x, y, "Buffer Size:");
-        drawRight(x, y, getTextBufInt(fParameters[kParameterBufferSize]));
-        y+=lineHeight;
 
         // sample rate
         drawLeft(x, y, "Sample Rate:");
@@ -95,69 +98,12 @@ protected:
         // nothing
         y+=lineHeight;
 
-        // time stuff
-        drawLeft(x, y, "Playing:");
-        drawRight(x, y, (fParameters[kParameterTimePlaying] > 0.5f) ? "Yes" : "No");
-        y+=lineHeight;
-
-        drawLeft(x, y, "Frame:");
-        drawRight(x, y, getTextBufInt(fParameters[kParameterTimeFrame]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "Time:");
-        drawRight(x, y, getTextBufTime(fParameters[kParameterTimeFrame]));
-        y+=lineHeight;
-
-        // BBT
-        x = 200.0f * fScale;
-        y = 15.0f * fScale;
-
-        const bool validBBT(fParameters[kParameterTimeValidBBT] > 0.5f);
-        drawLeft(x, y, "BBT Valid:");
-        drawRight(x, y, validBBT ? "Yes" : "No");
-        y+=lineHeight;
-
-        if (! validBBT)
-            return;
-
-        drawLeft(x, y, "Bar:");
-        drawRight(x, y, getTextBufInt(fParameters[kParameterTimeBar]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "Beat:");
-        drawRight(x, y, getTextBufInt(fParameters[kParameterTimeBeat]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "Tick:");
-        drawRight(x, y, getTextBufInt(fParameters[kParameterTimeTick]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "Bar Start Tick:");
-        drawRight(x, y, getTextBufFloat(fParameters[kParameterTimeBarStartTick]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "Beats Per Bar:");
-        drawRight(x, y, getTextBufFloat(fParameters[kParameterTimeBeatsPerBar]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "Beat Type:");
-        drawRight(x, y, getTextBufFloat(fParameters[kParameterTimeBeatType]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "Ticks Per Beat:");
-        drawRight(x, y, getTextBufFloat(fParameters[kParameterTimeTicksPerBeat]));
-        y+=lineHeight;
-
-        drawLeft(x, y, "BPM:");
-        drawRight(x, y, getTextBufFloat(fParameters[kParameterTimeBeatsPerMinute]));
-        y+=lineHeight;
     }
 
 
     void onResize(const ResizeEvent& ev) override
     {
         fScale = static_cast<float>(ev.size.getHeight())/256.0f;
-
         UI::onResize(ev);
     }
 
@@ -165,7 +111,7 @@ protected:
 
 private:
     // Parameters
-    float  fParameters[kParameterCount];
+    float  fParamGain;
     double fSampleRate;
 
     // UI stuff
@@ -188,15 +134,6 @@ private:
         return fStrBuf;
     }
 
-    const char* getTextBufTime(const uint64_t frame)
-    {
-        const uint32_t time = frame / uint64_t(fSampleRate);
-        const uint32_t secs =  time % 60;
-        const uint32_t mins = (time / 60) % 60;
-        const uint32_t hrs  = (time / 3600) % 60;
-        std::snprintf(fStrBuf, 0xff, "%02i:%02i:%02i", hrs, mins, secs);
-        return fStrBuf;
-    }
 
     // helpers for drawing text
     void drawLeft(const float x, const float y, const char* const text)
@@ -220,7 +157,7 @@ private:
    /**
       Set our UI class as non-copyable and add a leak detector just in case.
     */
-    DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InfoExampleUI)
+    DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GainUI)
 };
 
 /* ------------------------------------------------------------------------------------------------------------
@@ -228,7 +165,7 @@ private:
 
 UI* createUI()
 {
-    return new InfoExampleUI();
+    return new GainUI();
 }
 
 // -----------------------------------------------------------------------------------------------------------

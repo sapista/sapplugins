@@ -15,8 +15,8 @@ NAME = gain
 FILES_DSP = \
 	GainPlugin.cpp
 
-#FILES_UI  = \
-	GainPluginUI.cpp.o
+FILES_UI  = \
+	GainPluginUI.cpp
 
 # --------------------------------------------------------------
 # Do some magic
