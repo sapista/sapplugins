@@ -72,7 +72,7 @@ protected:
     */
     const char* getHomePage() const override
     {
-        return "http://sapaudio.com/plugins/gainmono";
+        return "http://sapaudio.org/plugins/gainmono";
     }
 
    /**
@@ -98,7 +98,7 @@ protected:
     */
     int64_t getUniqueId() const override
     {
-        return d_cconst('G', 'a', 'i', 'n'); //TODO investigate how VST is using this!
+        return d_cconst('G', 'a', 'i', 'n');
     }
 
    /* --------------------------------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ protected:
     */
     void initParameter(uint32_t, Parameter& parameter) override
     {
-        parameter.hints      = kParameterIsAutomable;
+        parameter.hints      = kParameterIsAutomatable;
         parameter.ranges.def = 1.0f;
         parameter.ranges.min = 0.0f;
         parameter.ranges.max = 1.0f;

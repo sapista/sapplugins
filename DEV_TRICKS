@@ -11,12 +11,23 @@ git submodule update
 
 #Fresh cloning the git rep:
 Since the DPF is a submodule it will not be clonent. 
-Rigth after clonning the sapplugins project you must runt
+Rigth after clonning the sapplugins project you must run
 git submodule init 
 git submodule update
+
+#To ensure to update pugl submodules run:
+git submodule update --init --recursive
 
 #Infor link on git submodules
 https://git-scm.com/book/en/v2/Git-Tools-Submodules
 https://gist.github.com/gitaarik/8735255
+
+
+#testing LV2
+lv2info
+
+lv2file -i matlab/dirac.wav  -o matlab/responses/lat.wav -p Latency:4.0 http://sapaudio.org/plugins/lpeqmono
+
+
 
  

@@ -1,6 +1,6 @@
 /*
  * DISTRHO Plugin Framework (DPF)
- * Copyright (C) 2012-2019 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2012-2022 Filipe Coelho <falktx@falktx.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with
  * or without fee is hereby granted, provided that the above copyright notice and this
@@ -17,16 +17,18 @@
 #ifndef DISTRHO_PLUGIN_INFO_H_INCLUDED
 #define DISTRHO_PLUGIN_INFO_H_INCLUDED
 
-#define DISTRHO_PLUGIN_BRAND "SAPAudio"
-#define DISTRHO_PLUGIN_NAME  "Gain"
-#define DISTRHO_PLUGIN_URI   "http://sapaudio.org/plugins/gainmono"
+#define DISTRHO_PLUGIN_BRAND   "SAPAudio"
+#define DISTRHO_PLUGIN_NAME    "LPEQ-Mono"
+#define DISTRHO_PLUGIN_URI     "http://sapaudio.org/plugins/lpeqmono"
 
-#define DISTRHO_PLUGIN_HAS_UI       1
-#define DISTRHO_PLUGIN_IS_RT_SAFE   1
-#define DISTRHO_PLUGIN_NUM_INPUTS   1
-#define DISTRHO_PLUGIN_NUM_OUTPUTS  1
-#define DISTRHO_PLUGIN_WANT_TIMEPOS 0 //TODO review
-#define DISTRHO_UI_USER_RESIZABLE   1 //TODO review
-#define DISTRHO_UI_USE_NANOVG       1 //TODO review
+#define DISTRHO_PLUGIN_HAS_UI        1
+#define DISTRHO_PLUGIN_IS_RT_SAFE    1
+#define DISTRHO_PLUGIN_NUM_INPUTS    1
+#define DISTRHO_PLUGIN_NUM_OUTPUTS   1
+#define DISTRHO_UI_FILE_BROWSER      0
+#define DISTRHO_UI_USER_RESIZABLE    1
+#define DISTRHO_UI_DEFAULT_WIDTH     800
+#define DISTRHO_UI_DEFAULT_HEIGHT    600
+#define DISTRHO_PLUGIN_WANT_LATENCY  1
 
 #endif // DISTRHO_PLUGIN_INFO_H_INCLUDED
