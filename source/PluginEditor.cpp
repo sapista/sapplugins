@@ -1,12 +1,16 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Pere Ràfols Soler
+
 #include "PluginEditor.h"
 
 PluginEditor::PluginEditor (PluginProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p)
+    : AudioProcessorEditor (&p), processorRef (p), myEqCurve(5)
 {
     juce::ignoreUnused (processorRef);
 
-    addAndMakeVisible (inspectButton);
-
+    /*addAndMakeVisible (inspectButton);
+    
+        
     // this chunk of code instantiates and opens the melatonin inspector
     inspectButton.onClick = [&] {
         if (!inspector)
@@ -17,15 +21,53 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
         inspector->setVisible (true);
     };
+    */
+    
+    addAndMakeVisible (myEqCurve);
+    
+    
+    //TODO delete me
+    // In your constructor
+    //addAndMakeVisible(myCircle);
+    //myCircle.setBounds(100, 100, 50, 50);
+    
+    /*
+    myCircle.onHover = [this](bool isHovered) {
+    if (isHovered) {
+        DBG("Mouse entered the circle!");
+    } else {
+        DBG("Mouse left the circle!");
+    }
+    };
+    */
+    
 
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    //Allow the user to drag the corner
+    setResizable (true, true); 
+    setResizeLimits (400, 300, 1680, 1200);
+    setSize (1000, 600);
+    
 }
 
 PluginEditor::~PluginEditor()
 {
 }
+
+//Need to let the Standalone gui work in linux
+void PluginEditor::parentHierarchyChanged()
+{
+    // Check if we are actually attached to a native window
+    if (auto* peer = getPeer()) 
+    {
+        // Re-apply the size to the native window peer
+        // This stops the 400x300 -> 0x0 collapse
+        peer->getBounds(); 
+        setSize (1000, 600);
+        
+        //DBG("Parent hierarchy changed: Peer is now valid.");
+    }
+}
+
 
 void PluginEditor::paint (juce::Graphics& g)
 {
@@ -41,8 +83,11 @@ void PluginEditor::paint (juce::Graphics& g)
 
 void PluginEditor::resized()
 {
+    //DBG ("Resized called: " << getWidth() << " x " << getHeight());
     // layout the positions of your child components here
     auto area = getLocalBounds();
-    area.removeFromBottom(50);
-    inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
+    myEqCurve.setBounds(area); //TODO investigate how to limit to a portion of the area
+    //TODO this was to make room for melatonin inspector
+    //area.removeFromBottom(50);
+    //inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
 }
