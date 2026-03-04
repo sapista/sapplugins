@@ -4,7 +4,9 @@
 #include "PluginEditor.h"
 
 PluginEditor::PluginEditor (PluginProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p), myEqCurve(5)
+    : AudioProcessorEditor (&p), 
+    processorRef (p),
+    myEqCurve (createConfig (p.apvts, PluginProcessor::num_Bands))
 {
     juce::ignoreUnused (processorRef);
 
@@ -26,28 +28,51 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (myEqCurve);
     
     
-    //TODO delete me
-    // In your constructor
-    //addAndMakeVisible(myCircle);
-    //myCircle.setBounds(100, 100, 50, 50);
-    
-    /*
-    myCircle.onHover = [this](bool isHovered) {
-    if (isHovered) {
-        DBG("Mouse entered the circle!");
-    } else {
-        DBG("Mouse left the circle!");
-    }
+    // Signal Slots
+    myEqCurve.onGainChange = [this] (uint id, float newValue)
+    {
+        //TODO connect to audio processor
+        DBG("onGainChange ID: " << juce::String(id) << " value: " << newValue);
     };
-    */
     
-
+    myEqCurve.onFreqChange = [this] (uint id, float newValue)
+    {
+        //TODO connect to audio processor
+        DBG("onFreqChange ID: " << juce::String(id) << " value: " << newValue);
+    };
+    
+    myEqCurve.onQChange = [this] (uint id, float newValue)
+    {
+        //TODO connect to audio processor
+        DBG("onQChange ID: " << juce::String(id) << " value: " << newValue);
+    };
+    
     //Allow the user to drag the corner
     setResizable (true, true); 
     setResizeLimits (400, 300, 1680, 1200);
     setSize (1000, 600);
     
 }
+
+std::vector<sap::BandData> PluginEditor::createConfig(juce::AudioProcessorValueTreeState& apvts, uint numBands)
+{
+    std::vector<sap::BandData> config;
+    config.reserve(static_cast<std::size_t> (numBands)); // Optimization: prevent reallocations
+
+    for (uint i = 0; i < numBands; ++i)
+    {
+        auto suffix = juce::String(i + 1); 
+        
+        //Syntax order: ID, param_key_str, default value or last laoded in daw, range
+        config.push_back({ 
+            i,
+            { "band_freq" + suffix, apvts.getRawParameterValue("band_freq" + suffix)->load(), apvts.getParameterRange("band_freq" + suffix) }, 
+            { "band_gain" + suffix, apvts.getRawParameterValue("band_gain" + suffix)->load(), apvts.getParameterRange("band_gain" + suffix) },
+            { "band_q"    + suffix, apvts.getRawParameterValue("band_q" + suffix)->load(), apvts.getParameterRange("band_q"    + suffix) }
+            });
+    }
+    return config;
+    }
 
 PluginEditor::~PluginEditor()
 {

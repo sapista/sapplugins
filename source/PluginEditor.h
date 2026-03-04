@@ -12,7 +12,7 @@
 class PluginEditor : public juce::AudioProcessorEditor
 {
 public:
-    explicit PluginEditor (PluginProcessor&);
+    PluginEditor(PluginProcessor& p);
     ~PluginEditor() override;
 
     //==============================================================================
@@ -21,6 +21,9 @@ public:
     void parentHierarchyChanged() override;
 
 private:
+    // This must be static so it can be called in the initializer list
+    static std::vector<sap::BandData> createConfig (juce::AudioProcessorValueTreeState& apvts, uint numBands);
+    
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     PluginProcessor& processorRef;

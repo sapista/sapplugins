@@ -13,7 +13,8 @@ PluginProcessor::PluginProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+    apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
 }
 
@@ -186,4 +187,45 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new PluginProcessor();
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    
+    //Bands freq initially distributed accross 20 Hz to 20 kHz
+    const float firstBandFreq = 20.0f;
+    const float lastBandFreq = 18.0e3f;
+    const float logfdist = (1.0f/ (static_cast<float> ( num_Bands - 1)) )*std::log2(lastBandFreq/firstBandFreq);
+    float fcurr = firstBandFreq;
+    
+    for (uint i = 0; i < num_Bands; ++i)
+    {
+        auto suffix = juce::String(i + 1); 
+    
+        // FREQUENCY: Logarithmic scale (skew 0.3)
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID {"band_freq" + suffix, 1}, // ID and version
+            "Frequency 1",                   // Display Name
+            juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.3f), 
+            fcurr));                     // Default
+        fcurr = std::pow(2.0f, std::log2(fcurr) + logfdist);
+        
+        // GAIN: Linear scale in dB
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID {"band_gain" + suffix, 1},
+            "Gain 1",
+            juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f),
+            0.0f));
+
+        // Q: Linear scale
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID {"band_q" + suffix, 1},
+            "Q 1",
+            juce::NormalisableRange<float>(0.2f, 10.0f, 0.1f),
+            1.5f));
+
+    }
+       
+    return layout;
 }

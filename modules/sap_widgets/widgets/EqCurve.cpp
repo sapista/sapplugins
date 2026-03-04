@@ -1,44 +1,62 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Pere Ràfols Soler
 
-EqCurve::EqCurve(const uint band_count):
-    bandCount(band_count)
+EqCurve::EqCurve(const std::vector<BandData>& bands)
 {
-    for (uint i = 0; i < bandCount; ++i)
+    for (const auto& data : bands)
     {
-        auto newBand = std::make_unique<sap::EqBandControl>(i);
+        auto newBand = std::make_unique<sap::EqBandControl>(data);
         addAndMakeVisible (newBand.get());
         EqBands.push_back (std::move (newBand));
         
-        auto* band = EqBands[i].get();
+        auto* band = EqBands.back().get();        
         band->onMouseDrag = [this, band] (float newPosX, float newPosY)
         {
-            int newX = static_cast<int>(newPosX); 
-            int newY = static_cast<int>(newPosY); 
-
+            int newX = juce::roundToInt(newPosX); 
+            int newY = juce::roundToInt(newPosY);    
             
             // Limit movement to curve bounds
-            newX = juce::jlimit(static_cast<int>(map_Hz2Pixel(getFreqMin())), 
-                                static_cast<int>(map_Hz2Pixel(getFreqMax())),
+            newX = juce::jlimit(juce::roundToInt(map_Hz2Pixel(getFreqMin())), 
+                                juce::roundToInt(map_Hz2Pixel(getFreqMax())),
                                 newX);
-           
-            newY = juce::jlimit(static_cast<int>(map_dB2Pixel(0.5f*getRangedB())),
-                                static_cast<int>(map_dB2Pixel(-0.5f*getRangedB())), 
+            
+            newY = juce::jlimit(juce::roundToInt(map_dB2Pixel(0.5f*getRangedB())),
+                                juce::roundToInt(map_dB2Pixel(-0.5f*getRangedB())), 
+                                newY);
+            
+            // Limit movement to parameter range
+            newX = juce::jlimit(juce::roundToInt(map_Hz2Pixel(band->getMinFreq())), 
+                                juce::roundToInt(map_Hz2Pixel(band->getMaxFreq())),
+                                newX);
+                       
+            newY = juce::jlimit(juce::roundToInt(map_dB2Pixel(band->getMaxGain())),
+                                juce::roundToInt(map_dB2Pixel(band->getMinGain())), 
                                 newY);
 
+            //Get current center before moving
+            auto centerAnt =  band->getBounds().getCentre();
+            
             // Move the entire BandControl
             band->setCentrePosition(newX, newY);
             
             //Get Hz from X coord
-            band->setFreq( map_Pixel2Hz(newX));
-            //TODO emit freq signal
+            if(centerAnt.getX() != newX)
+            {
+                band->setFreq(map_Pixel2Hz(newX));
+                if (onFreqChange != nullptr)
+                    onFreqChange (band->getID(), band->getFreq());
+            }
             
             //Get dB from Y coord
-            band->setGain( map_Pixel2dB(newY));
-            //TODO emit Gain signal
+            if(centerAnt.getY() != newY)
+            {
+                band->setGain(map_Pixel2dB(newY));
+                if (onGainChange != nullptr)
+                    onGainChange (band->getID(), band->getGain());
+            }
         };
         
-        band->onGainChanged = [this,band] (float x,  juce::Point<float> offset)
+        band->onGainChanged = [this,band] (uint id, float x,  juce::Point<float> offset)
         {
             // Move the entire BandControl
             band->setCentrePosition(band->getBounds().getCentreX(), (int)map_dB2Pixel(x));
@@ -50,11 +68,11 @@ EqCurve::EqCurve(const uint band_count):
             globalCenter.y += offset.y;
             juce::Desktop::getInstance().setMousePosition (globalCenter.roundToInt());
             
-            DBG("Gain Changed: " << x);
-            //TODO emit Gain signal
+            if (onGainChange != nullptr)
+                onGainChange (id, x); 
         };
         
-        band->onFreqChanged = [this,band] (float x,  juce::Point<float> offset)
+        band->onFreqChanged = [this,band] (uint id, float x,  juce::Point<float> offset)
         {
             // Move the entire BandControl
             band->setCentrePosition((int)map_Hz2Pixel(x), band->getBounds().getCentreY());
@@ -66,14 +84,19 @@ EqCurve::EqCurve(const uint band_count):
             globalCenter.y += offset.y;
             juce::Desktop::getInstance().setMousePosition (globalCenter.roundToInt());
             
-            DBG("Freq Changed: " << x);
-            //TODO emit Freq signal
+            if (onFreqChange != nullptr)
+                onFreqChange (id, x);
         };
         
-        band->onQChanged = [this,band] (float x)
+        band->onQChanged = [this,band] (uint id, float x)
         {
-            DBG("Q Changed: " << x);
-            //TODO emit Q signal
+            if (onQChange != nullptr)
+                onQChange (id, x);
+        };
+        
+        band->onBandHovered = [this] ()
+        {
+            hideAllBandsControls();
         };
     }
 }
@@ -86,4 +109,29 @@ void EqCurve::paint (juce::Graphics& g)
 void EqCurve::resized()
 {
     FreqGrid::resized();
+    
+    //Set all bands positions
+    auto bounds = getLocalBounds();
+    if (bounds.isEmpty()) return;
+
+    for (const auto& band : EqBands)
+    {
+        // Pass the cached bounds to your mapping functions
+        int x = static_cast<int>(map_Hz2Pixel(band->getFreq()));
+        int y = static_cast<int>(map_dB2Pixel(band->getGain()));
+        band->setCentrePosition(x, y);
+    }
+}
+
+void EqCurve::mouseEnter(const juce::MouseEvent& event)
+{
+    hideAllBandsControls();
+}
+
+void EqCurve::hideAllBandsControls()
+{
+    for (const auto& band : EqBands)
+    {
+        band->hideChildBalls();
+    }
 }

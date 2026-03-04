@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Pere Ràfols Soler
 
-EqBall::EqBall(const juce::String& units,  bool horizontalDrag)
-    : str_units(units), bHorizontalDrag(horizontalDrag), bIsEditing(false)
+EqBall::EqBall(const juce::String& units,  bool horizontalDrag, ParameterData param_data)
+    : str_units(units),
+    bHorizontalDrag(horizontalDrag),
+    paramData(param_data),
+    bIsEditing(false)
 {
     const int w = str_units.length() * 12 + 41;
     setBounds(0, 0, w, 20); 
     setWantsKeyboardFocus(true);
+    value = paramData.default_value;
 }
 
 void EqBall::paint (juce::Graphics& g) 
 {
-    
     // Get the current global mouse modifiers
     auto mods = juce::ModifierKeys::getCurrentModifiers();
 
@@ -94,9 +97,7 @@ bool EqBall::keyPressed (const juce::KeyPress& key)
             newValue = str_currentInputString.getFloatValue();
         }
         
-        setValue(newValue);
-        
-        //TODO this may trigger a signal with unlimited values since the limit is at setValue! Thats wrong! there is another signal with the same problem... somewere...
+        setValue(newValue); //Set the param value and limit to a valid range
         if (onValueChange != nullptr)
             onValueChange (value);
         
@@ -277,35 +278,53 @@ void EqBall::mouseUp (const juce::MouseEvent& event)
 
 // Set new value
 void EqBall::setValue(float x)
-{
-    //TODO apply limits to the param? Or is this somthing JUCE already does?
-    //TODO apply limits! i need the limits param in constructor!
-    //newValue = juce::jlimit(20.0f, 20000.0f, newValue);
-    
-    value = x;
+{    
+    value = juce::jlimit(paramData.range.start, paramData.range.end, x);   
     repaint();
 }
 
-//=================================================== EQ BAND
-EqBandControl::EqBandControl(const uint ID)
-    : id(ID), BallGain("dB", false), BallFreq("Hz", true), BallQ("Q", true)
+// Get value
+float EqBall::getValue()
 {
-    addAndMakeVisible (BallGain);
-    addAndMakeVisible (BallFreq);
-    addAndMakeVisible (BallQ);
+    return value;
+}
+
+float EqBall::getMinValue()
+{
+    return paramData.range.start;
+}
+
+float EqBall::getMaxValue()
+{
+    return paramData.range.end;
+}
+
+//=================================================== EQ BAND
+EqBandControl::EqBandControl(BandData band)
+    : id(band.ID), 
+    BallGain("dB", false, band.gain),
+    BallFreq("Hz", true, band.freq),
+    BallQ("Q", true, band.q),
+    bBallIsDragging(false)
+{
+    addChildComponent (BallGain);
+    addChildComponent (BallFreq);
+    addChildComponent (BallQ);
     
     //Hard-coded layout
-    setBounds(0, 0, 152, 56);
+    //setBounds(0, 0, 152, 56);
+    setSize (152, 56);
     BallGain.setTopLeftPosition(7, 1);
     BallFreq.setTopLeftPosition(85, 7);
     BallQ.setTopLeftPosition(85, 30);
     
     // Signal Slots
-    BallGain.onValueChange = [this] (float newValue){
+    BallGain.onValueChange = [this] (float newValue)
+    {
         if(onGainChanged != nullptr)
         {
             juce::Point<float> offset = BallGain.getBounds().getCentre().toFloat() - getLocalBounds().getCentre().toFloat();
-            onGainChanged(newValue, offset);
+            onGainChanged(id, newValue, offset);
         }
     };
     
@@ -321,7 +340,7 @@ EqBandControl::EqBandControl(const uint ID)
         if(onFreqChanged != nullptr)
         {
             juce::Point<float> offset = BallFreq.getBounds().getCentre().toFloat() - getLocalBounds().getCentre().toFloat();
-            onFreqChanged(newValue, offset);
+            onFreqChanged(id, newValue, offset);
         }
     };
     
@@ -336,39 +355,22 @@ EqBandControl::EqBandControl(const uint ID)
     BallQ.onValueChange = [this] (float newValue){
         if(onQChanged != nullptr)
         {
-            onQChanged(newValue);
+            onQChanged(id, newValue);
         }
     };
 
     
 }
 
-/*
-bool EqBandControl::hitTest(int x, int y)
-{
-    float dx = std::abs(x - (getWidth() * 0.5f));
-    float dy = std::abs(y - (getHeight() * 0.5f));
-    
-    //TODO delete!
-    //int result = (dx < ball_diameter*0.5f && dy < ball_diameter*0.5f) ? 1 : 0;
-    //DBG("dx = " << dx << " dy = " << dy << " Result = " << result );
-    
-    return dx < ball_diameter*0.5f && dy < ball_diameter*0.5f;
-    //return (dx * dx) / (ball_diameter * ball_diameter) + (dy * dy) / (ball_diameter * ball_diameter) <= 1.0f;
-}
-*/
-
 void EqBandControl::paint (juce::Graphics& g) 
 {
-    //TODO remove the test Rectangle
-    g.setColour (juce::Colours::red);
-    g.drawRect (getLocalBounds(), 1.0f);
-    
     // Get the current global mouse modifiers
     auto mods = juce::ModifierKeys::getCurrentModifiers();
 
     // Check if it's specifically the Left Button AND the mouse is over/dragging us
     bool isLeftDragging = mods.isLeftButtonDown() && isMouseOverOrDragging();
+    
+    //TODO add tree state colors: defauks, hover, dragging
     
     // Change color based on hover state
     g.setColour((isMouseOver() || isLeftDragging) ? sap::ColourEqBallHover : sap::ColourEqBallDefault);
@@ -392,15 +394,86 @@ void EqBandControl::paint (juce::Graphics& g)
 }
 
 void EqBandControl::mouseEnter(const juce::MouseEvent& event)
-{
-    //TODO make child appear
+{   
+    //This event will trigger to force all bands controls event this one! So must be called first!
+    if(onBandHovered != nullptr)
+        onBandHovered();
+ 
+    BallGain.setVisible(true);
+    BallFreq.setVisible(true);
+    BallQ.setVisible(true);
+    toFront (true); 
     repaint();
 }
 
 void EqBandControl::mouseExit(const juce::MouseEvent& event)
 {
-    //TODO make child disappear
+    
     repaint();
+}
+
+void EqBandControl::mouseDown (const juce::MouseEvent& event)
+{
+    if (event.mods.isLeftButtonDown())
+    {
+        //Get coords only if mouse started the drag on the ball
+        auto center = getLocalBounds().getCentre().toFloat();
+        auto startPos = event.getMouseDownPosition().toFloat();
+        float distanceFromCenter = center.getDistanceFrom (startPos);
+        
+        if (distanceFromCenter <= ball_diameter*0.6f)
+        {
+            bBallIsDragging = true;
+        }
+    }
+}
+
+void EqBandControl::mouseUp (const juce::MouseEvent& event)
+{
+    //TODO use it?
+}
+
+void EqBandControl::mouseDrag (const juce::MouseEvent& event)
+{
+    if (! event.mods.isAnyMouseButtonDown())
+    {
+        bBallIsDragging = false;
+        return;
+    }
+    
+    if(bBallIsDragging)
+    {
+        auto parentEvent = event.getEventRelativeTo (getParentComponent());
+        auto mouseInParent = parentEvent.position;
+        if(onMouseDrag != nullptr)
+        {
+            onMouseDrag(mouseInParent.x, mouseInParent.y);
+        }
+    }
+}
+
+void EqBandControl::mouseWheelMove (const juce::MouseEvent& event, const juce::MouseWheelDetails& det)
+{
+    //Start wheel action only if mouse on the ball
+    auto center = getLocalBounds().getCentre().toFloat();
+    auto startPos = event.getMouseDownPosition().toFloat();
+    float distanceFromCenter = center.getDistanceFrom (startPos);
+    
+    if (distanceFromCenter <= ball_diameter*0.6f)
+    {
+        BallQ.mouseWheelMove(event, det);
+    }
+}
+
+void EqBandControl::focusLost (FocusChangeType cause)
+{
+    // If we lose focus, act as if the user let go of the mouse
+    bBallIsDragging = false;
+}
+
+uint EqBandControl::getID()
+{
+    return id;
 }
 
 void EqBandControl::setGain(float x)
@@ -408,7 +481,55 @@ void EqBandControl::setGain(float x)
     BallGain.setValue(x);
 }
 
+float EqBandControl::getGain()
+{
+    return BallGain.getValue();
+}
+
 void EqBandControl::setFreq(float x)
 {
     BallFreq.setValue(x);    
+}
+
+float EqBandControl::getFreq()
+{
+    return BallFreq.getValue();
+}
+
+void EqBandControl::setQ(float x)
+{
+    BallQ.setValue(x);    
+}
+
+float EqBandControl::getQ()
+{
+    return BallQ.getValue();
+}
+
+void EqBandControl::hideChildBalls()
+{
+    
+    //TODO possible improvement: add a timmer, when a band is unselected... wait a few ms to make it disapear?
+    BallFreq.setVisible(false);
+    BallQ.setVisible(false);
+}
+
+float EqBandControl::getMinFreq()
+{
+    return BallFreq.getMinValue();
+}
+
+float EqBandControl::getMaxFreq()
+{
+    return BallFreq.getMaxValue();
+}
+
+float EqBandControl::getMinGain()
+{
+    return BallGain.getMinValue();
+}
+
+float EqBandControl::getMaxGain()
+{
+    return BallGain.getMaxValue();
 }

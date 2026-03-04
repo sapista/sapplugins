@@ -13,6 +13,7 @@ void FreqGrid::paint (juce::Graphics& g)
 
 void FreqGrid::resized()
 {
+    recompute_pixel_mappings();
     triggerAsyncUpdate();
 }
 
@@ -70,9 +71,7 @@ float FreqGrid::map_Hz2Pixel(float Hz)
 }
 
 void FreqGrid::renderGridToCache()
-{
-    recompute_pixel_mappings();
-    
+{    
     gridCache = juce::Image (juce::Image::ARGB, getWidth(), getHeight(), true);
     juce::Graphics g (gridCache);
     

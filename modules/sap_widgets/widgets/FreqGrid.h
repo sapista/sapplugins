@@ -18,9 +18,6 @@ public:
     float getFreqMax();
     float getRangedB();
     
-    // Signals
-    //TODO
-    
 protected:
     
     //Methods
@@ -32,12 +29,12 @@ protected:
 
 private:    
     
-    static constexpr float plot_margin = 30.0f;
+    static constexpr float plot_margin = 70.0f;
     static constexpr uint numdBLines = 12;    
     
     static constexpr float default_dB_range = 32.0f;
-    static constexpr float default_freq_min = 10.0f;
-    static constexpr float default_freq_max = 22.05e3f;
+    static constexpr float default_freq_min = 5.0f;
+    static constexpr float default_freq_max = 30.0e3f;
     
     //These ranges will be modified during zoom/pan on the freq widget
     float dB_range = default_dB_range;

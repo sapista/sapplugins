@@ -8,18 +8,22 @@
 class EqCurve : public FreqGrid
 {
 public:
-    EqCurve(const uint band_count);
+    EqCurve(const std::vector<BandData>& bands);
     void paint (juce::Graphics& g) override;
     void resized() override;
+    void mouseEnter(const juce::MouseEvent& event) override;
     
     //Data accessors
     //TODO
     
     // Signals
-    //TODO
+    std::function<void (uint, float)> onGainChange;
+    std::function<void (uint, float)> onFreqChange;
+    std::function<void (uint, float)> onQChange;
+    //TODO add bypass, mid-side, LR... etc...
     
 private:
-    const uint bandCount;
+    void hideAllBandsControls();
     std::vector<std::unique_ptr<sap::EqBandControl>> EqBands;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EqCurve)
