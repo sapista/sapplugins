@@ -14,3 +14,6 @@
 	path = modules/clap-juce-extensions
 	url = https://github.com/free-audio/clap-juce-extensions.git
 	branch = main
+[submodule "modules/melatonin_blur"]
+	path = modules/melatonin_blur
+	url = https://github.com/sudara/melatonin_blur.git

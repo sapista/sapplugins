@@ -3,6 +3,11 @@
 
 #pragma once
 
+#ifdef IDE_PARSER
+  #include "../sap_widgets.h"
+  using namespace sap;
+#endif
+
 struct ParameterData
 {
     juce::String paramID;
@@ -42,7 +47,7 @@ public:
     // Signals
     std::function<void (float)> onValueChange;
     std::function<void (float, float)> onMouseDrag;
-    
+    std::function<void ()> onHovered;
     
 private:
     juce::String str_units;
@@ -50,14 +55,47 @@ private:
     ParameterData paramData;
     float value = 0.0f;
     juce::Point<float> offset;
-    bool bIsEditing;
+    VisualState currentState = VisualState::Default;
     juce::String str_currentInputString;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EqBall)
 };
 
+class OnOffBall : public juce::Button
+{
+public:
+    OnOffBall();
+    void paintButton (juce::Graphics& g, bool isHovered, bool isDown) override;
+    
+    // Data accessors
+    void setValue(bool x);
+    bool getValue();
 
-class EqBandControl : public juce::Component
+    // Signals
+    std::function<void (bool)> onValueChange;
+    std::function<void ()> onHovered;
+    
+private:    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OnOffBall)
+};
+
+class ConfigBall : public juce::Button
+{
+public:
+    ConfigBall();
+    void paintButton (juce::Graphics& g, bool isHovered, bool isDown) override;
+    
+    // Signals
+    std::function<void ()> onHovered;
+    
+private:
+    juce::Image wrenchCache;
+    void renderWrenchToCache();
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ConfigBall)
+};
+
+class EqBandControl final: public juce::Component, public juce::Timer
 {
 public:
     EqBandControl(BandData band);
@@ -65,6 +103,7 @@ public:
     void paint (juce::Graphics& g) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override; 
     void mouseEnter(const juce::MouseEvent& event) override;
+    bool hitTest(int x, int y) override;
     void mouseExit(const juce::MouseEvent& event)override;
     void mouseDown (const juce::MouseEvent& event) override;
     void mouseUp (const juce::MouseEvent& event) override;
@@ -91,11 +130,25 @@ public:
     std::function<void (uint, float, juce::Point<float>)> onGainChanged;
     std::function<void (uint, float, juce::Point<float>)> onFreqChanged;
     std::function<void (uint, float)> onQChanged;    
+    std::function<void (uint, bool)> onOnOffChanged;    
+    std::function<void (uint)> onConfigClicked;
     
 private:
     const uint id;
     static constexpr float ball_diameter = 22.0f;
     EqBall BallGain, BallFreq, BallQ;
-    bool bBallIsDragging;
+    OnOffBall BallOnOff;
+    ConfigBall BallConfig;
+    VisualState currentState = VisualState::Default;
+    bool mouseInBall(const juce::MouseEvent& event);
+    
+    //Drop shadow
+    juce::Path shadowPath;
+    melatonin::DropShadow shadow = { juce::Colours::white, ball_diameter, { 0,0 }, 1.0f }; //{ color, radius, offset, spread }
+    float shadowOpacity = 0.0f;
+    float targetOpacity = 0.0f;
+    void setShadowOpacity(float target);
+    void timerCallback() override;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EqBandControl)
 };

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Pere Ràfols Soler
 
+using namespace sap;
+
 EqCurve::EqCurve(const std::vector<BandData>& bands)
 {
     for (const auto& data : bands)
@@ -94,9 +96,21 @@ EqCurve::EqCurve(const std::vector<BandData>& bands)
                 onQChange (id, x);
         };
         
+        band->onOnOffChanged = [this,band] (uint id, bool x)
+        {
+            if (onOnOffChange != nullptr)
+                onOnOffChange (id, x);
+        };
+        
         band->onBandHovered = [this] ()
         {
             hideAllBandsControls();
+        };
+        
+        band->onConfigClicked = [this, band] (uint id)
+        {
+            //TODO open the extra buttons config region
+            DBG("onConfigClicked ID: " << juce::String(id) );
         };
     }
 }

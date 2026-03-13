@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (c) 2026 Pere Ràfols Soler
 
+using namespace sap;
+
 FreqGrid::FreqGrid()    
 {    
     recompute_pixel_mappings();

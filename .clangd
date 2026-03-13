@@ -1,0 +1,7 @@
+---
+CompileFlags:
+  Add: [
+    "-DJUCE_UNIT_TESTS=0",
+    "-include",
+    "/home/sapista/build/SapAudio_plugins/code/sapplugins/modules/sap_widgets/sap_widgets.h"
+  ]

@@ -47,6 +47,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         DBG("onQChange ID: " << juce::String(id) << " value: " << newValue);
     };
     
+    myEqCurve.onOnOffChange = [this] (uint id, bool newValue)
+    {
+        //TODO connect to audio processor
+        DBG("onOnOffChange ID: " << juce::String(id) << " value: " << (newValue ? "On" : "Off"));
+    };
+    
     //Allow the user to drag the corner
     setResizable (true, true); 
     setResizeLimits (400, 300, 1680, 1200);
@@ -65,7 +71,7 @@ std::vector<sap::BandData> PluginEditor::createConfig(juce::AudioProcessorValueT
         
         //Syntax order: ID, param_key_str, default value or last laoded in daw, range
         config.push_back({ 
-            i,
+            i + 1,
             { "band_freq" + suffix, apvts.getRawParameterValue("band_freq" + suffix)->load(), apvts.getParameterRange("band_freq" + suffix) }, 
             { "band_gain" + suffix, apvts.getRawParameterValue("band_gain" + suffix)->load(), apvts.getParameterRange("band_gain" + suffix) },
             { "band_q"    + suffix, apvts.getRawParameterValue("band_q" + suffix)->load(), apvts.getParameterRange("band_q"    + suffix) }

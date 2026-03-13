@@ -20,7 +20,9 @@ public:
     std::function<void (uint, float)> onGainChange;
     std::function<void (uint, float)> onFreqChange;
     std::function<void (uint, float)> onQChange;
-    //TODO add bypass, mid-side, LR... etc...
+    std::function<void (uint, bool)> onOnOffChange;
+    std::function<void (uint)> onConfigClicked;
+    //TODO add , mid-side, LR... etc...
     
 private:
     void hideAllBandsControls();

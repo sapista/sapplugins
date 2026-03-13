@@ -56,6 +56,7 @@ add_subdirectory(modules/clap-juce-extensions EXCLUDE_FROM_ALL)
 
 # Add any other modules you want modules here, before the juce_add_plugin call
 # juce_add_module(modules/my_module)
+juce_add_module(modules/melatonin_blur) 
 juce_add_module(modules/sap_widgets)
 
 # This adds the melatonin inspector module
@@ -145,6 +146,7 @@ target_link_libraries(SharedCode
     INTERFACE
     Assets
     melatonin_inspector
+    melatonin_blur
     sap_widgets
     juce_audio_utils
     juce_audio_processors
